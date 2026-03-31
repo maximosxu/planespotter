@@ -218,25 +218,19 @@ function showAircraft(aircraft) {
       });
     }
 
-    // Card click → pan to plane
-    card.addEventListener("click", () => {
-      map.setView([ac.latitude, ac.longitude], 13);
-      const tabMap = document.getElementById("tab-map");
-      const tabList = document.getElementById("tab-list");
-      const sidebar = document.getElementById("sidebar");
-      if (window.innerWidth <= 768) {
-        tabMap.classList.add("active");
-        tabList.classList.remove("active");
-        sidebar.classList.remove("mobile-visible");
-        map.invalidateSize();
-      }
-    });
+    card.dataset.index = i;
     list.appendChild(card);
 
+    let cardMarker = null;
     if (ac.latitude && ac.longitude) {
-      const marker = L.marker([ac.latitude, ac.longitude], {
+      cardMarker = L.marker([ac.latitude, ac.longitude], {
         icon: planeIcon(ac.heading),
       })
+        .on("click", () => {
+          document.querySelectorAll(".aircraft-card.selected").forEach((el) => el.classList.remove("selected"));
+          card.classList.add("selected");
+          card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        })
         .addTo(map)
         .bindPopup(
           `<b>${escapeHtml(ac.callsign) || "Unknown"}</b>` +
@@ -247,8 +241,27 @@ function showAircraft(aircraft) {
             `<br>${formatSpeed(ac.velocity_ms)}` +
             `<br>${ac.distance_km} km away`
         );
-      markers.push(marker);
+      markers.push(cardMarker);
     }
+
+    // Card click → pan to plane, open popup, highlight card
+    card.addEventListener("click", () => {
+      document.querySelectorAll(".aircraft-card.selected").forEach((el) => el.classList.remove("selected"));
+      card.classList.add("selected");
+      map.flyTo([ac.latitude, ac.longitude], 13, { duration: 0.7 });
+      if (cardMarker) {
+        map.once("moveend", () => cardMarker.openPopup());
+      }
+      const tabMap = document.getElementById("tab-map");
+      const tabList = document.getElementById("tab-list");
+      const sidebar = document.getElementById("sidebar");
+      if (window.innerWidth <= 768) {
+        tabMap.classList.add("active");
+        tabList.classList.remove("active");
+        sidebar.classList.remove("mobile-visible");
+        map.invalidateSize();
+      }
+    });
   });
 }
 
@@ -270,7 +283,7 @@ function fetchOverhead(lat, lon) {
   status.textContent = "Scanning for aircraft...";
   showLoading();
 
-  fetch(`/api/overhead?lat=${lat}&lon=${lon}&radius=15`)
+  fetch(`/api/overhead?lat=${lat}&lon=${lon}&radius=20`)
     .then((r) => r.json())
     .then((data) => {
       hasFlightaware = data.has_flightaware || false;
@@ -329,6 +342,9 @@ function setupMobileTabs() {
 }
 
 initMap();
+map.on("click", () => {
+  document.querySelectorAll(".aircraft-card.selected").forEach((el) => el.classList.remove("selected"));
+});
 locate();
 setupMobileTabs();
 setInterval(locate, 60000);

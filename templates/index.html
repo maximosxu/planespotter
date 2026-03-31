@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plane Spotter</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -37,6 +38,10 @@
 
         @keyframes shimmer {
             to { background-position: -200% 0; }
+        }
+
+        @keyframes shimmer-border {
+            to { background-position: 100% 100%, -200% -200%; }
         }
 
         @keyframes float {
@@ -151,6 +156,19 @@
             background: #475569;
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .aircraft-card.selected {
+            background: #475569;
+            outline: 2px solid transparent;
+            background-clip: padding-box;
+            border: 2px solid transparent;
+            background-image: linear-gradient(#475569, #475569), linear-gradient(135deg, #f9a8d4, #c084fc, #f472b6, #f9a8d4);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+            background-size: 100% 100%, 200% 200%;
+            animation: shimmer-border 3s linear infinite;
+            box-shadow: 0 6px 20px rgba(231, 0, 116, 0.2);
         }
 
         .callsign {

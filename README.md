@@ -59,6 +59,7 @@ plane-spotter/
     index.html            # Single-page frontend (dark theme, responsive)
   static/
     app.js                # Map initialization, API calls, UI rendering
+    favicon.svg           # Plane icon for browser tab
 ```
 
 ## Key Files
@@ -66,7 +67,7 @@ plane-spotter/
 ### `app.py`
 - **`/health`** — Health check endpoint for deployment platforms
 - **`/api/overhead`** — Main endpoint: fetches nearby aircraft, enriches with airline/route data. Response cached server-side for 15 seconds.
-- **`/api/flight-details`** — On-demand FlightAware lookup for a single callsign. Rate-limited (10 requests/IP/minute).
+- **`/api/flight-details`** — On-demand FlightAware lookup for a single callsign. Rate-limited (10 requests/IP/minute). Only accepts callsigns from the most recent overhead results.
 - HTTPS redirect via `X-Forwarded-Proto` header
 - Security headers: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`
 
@@ -86,6 +87,7 @@ plane-spotter/
 - Renders aircraft as rotated SVG plane icons on the map and as cards in the sidebar
 - FlightAware details cached in `localStorage` (2-hour TTL, persists across page refreshes)
 - All API-sourced strings are HTML-escaped to prevent XSS
+- Clicking a map marker highlights and scrolls to the corresponding sidebar card
 - Mobile-responsive with map/list tab switching at 768px
 
 ## Environment Variables
@@ -117,7 +119,7 @@ pip install -r requirements.txt
 ## Running Locally
 
 ```bash
-gunicorn app:app
+gunicorn app:app --threads 2
 ```
 
 The app will be available at `http://localhost:8000`.
@@ -151,6 +153,7 @@ Set the health check path to `/health` in your `fly.toml`.
 ## Security
 
 - **Input validation**: Callsign parameter restricted to alphanumeric characters
+- **Active callsign check**: `/api/flight-details` only accepts callsigns from the current overhead results
 - **XSS protection**: All API-sourced strings escaped before HTML insertion
 - **HTTPS redirect**: HTTP requests redirected to HTTPS in production
 - **Security headers**: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`

@@ -51,6 +51,9 @@ def _cache_key(lat, lon, radius):
     return f"{round(lat, 2)},{round(lon, 2)},{round(radius, 1)}"
 
 
+# Active callsigns from the most recent /api/overhead response
+_active_callsigns = set()
+
 # Per-IP rate limiting for expensive endpoints
 _rate_limit_store = {}  # ip → [timestamp, ...]
 _RATE_LIMIT_MAX = 10
@@ -127,6 +130,9 @@ def overhead():
     for ac in closest:
         enrich_aircraft(ac)
 
+    _active_callsigns.clear()
+    _active_callsigns.update(ac["callsign"] for ac in closest if ac["callsign"])
+
     fa_available = bool(AEROAPI_KEY) and not is_budget_exceeded()
 
     response_data = {
@@ -154,6 +160,8 @@ def flight_details():
         return jsonify({"error": "callsign parameter is required"}), 400
     if not re.match(r'^[A-Za-z0-9]+$', callsign):
         return jsonify({"error": "Invalid callsign"}), 400
+    if callsign not in _active_callsigns:
+        return jsonify({"error": "Aircraft not found nearby"}), 404
 
     details = fa_flight_details(callsign)
     if details:
