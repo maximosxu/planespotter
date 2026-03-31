@@ -9,7 +9,7 @@ primary_region = 'sjc'
 [build]
 
 [processes]
-  app = "gunicorn app:app --threads 2 --bind 0.0.0.0:8080"
+  app = "/app/.venv/bin/gunicorn app:app --threads 2 --bind 0.0.0.0:8080"
 
 [http_service]
   internal_port = 8080
